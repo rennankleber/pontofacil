@@ -46,7 +46,13 @@ Python 3.10 ou superior.
 
 5. Acesse http://127.0.0.1:5000
 
-No Windows, também é possível iniciar o servidor e abrir o navegador com dois cliques em `iniciar_pontofacil.bat`.
+## Inicialização no Windows
+
+- `iniciar_projeto.bat` inicia o servidor neste computador e abre o navegador. `iniciar_pontofacil.bat` continua disponível como atalho equivalente.
+- `iniciar_rede_local.bat` inicia o servidor para dispositivos na mesma rede Wi-Fi/LAN; use o endereço IPv4 mostrado no CMD e a porta `5000`. Se o Firewall do Windows perguntar, permita somente em redes privadas. Não exponha esse servidor de desenvolvimento à internet.
+- `criar_acessos.bat` abre um assistente local para criar ou redefinir o acesso do dono e criar um administrador e um funcionário. As senhas são digitadas sem aparecer na tela e nunca são salvas nos arquivos `.bat`; o sistema grava somente hashes no banco SQLite local.
+
+O assistente usa o banco definido por `DATABASE_URL` (SQLite por padrão). Ele não apaga contas existentes, não redefine a senha do dono sem confirmação e recusa e-mails, CPFs ou matrículas duplicados.
 
 Para desenvolvimento com recarga automática, defina `FLASK_DEBUG=1`. O sistema usa
 `America/Sao_Paulo` como fuso horário por padrão; ajuste `TIMEZONE` se necessário.

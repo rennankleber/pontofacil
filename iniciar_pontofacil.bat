@@ -1,6 +1,8 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+set "PONTOFACIL_HOST=127.0.0.1"
+set "PONTOFACIL_PORT=5000"
 
 set "PYTHON=python"
 if exist ".venv\Scripts\python.exe" (

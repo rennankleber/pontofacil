@@ -141,25 +141,28 @@ def create_app(test_config=None):
         _migrate_staff_profiles()
         _migrate_company_membership()
 
-        owner_email = app.config["INITIAL_OWNER_EMAIL"].strip().lower()
-        owner = User.query.filter_by(email=owner_email).first()
-        if owner and owner.role != "owner":
-            raise RuntimeError(f"O e-mail configurado para o dono já pertence a outro perfil: {owner_email}")
-        if owner is None:
-            owner_password = app.config.get("INITIAL_OWNER_PASSWORD") or None
-            generated_password = owner_password is None
-            owner_password = owner_password or secrets.token_urlsafe(18)
-            owner = User(
-                name="Dono do sistema",
-                email=owner_email,
-                role="owner",
-                active=True,
-            )
-            owner.set_password(owner_password)
-            db.session.add(owner)
-            db.session.commit()
-            if generated_password:
-                print(f"E-mail do dono do sistema: {owner_email}")
-                print(f"Senha temporária do dono do sistema: {owner_password}")
+        if app.config.get("SEED_INITIAL_OWNER", True):
+            owner_email = app.config["INITIAL_OWNER_EMAIL"].strip().lower()
+            owner = User.query.filter_by(email=owner_email).first()
+            if owner and owner.role != "owner":
+                raise RuntimeError(
+                    f"O e-mail configurado para o dono já pertence a outro perfil: {owner_email}"
+                )
+            if owner is None:
+                owner_password = app.config.get("INITIAL_OWNER_PASSWORD") or None
+                generated_password = owner_password is None
+                owner_password = owner_password or secrets.token_urlsafe(18)
+                owner = User(
+                    name="Dono do sistema",
+                    email=owner_email,
+                    role="owner",
+                    active=True,
+                )
+                owner.set_password(owner_password)
+                db.session.add(owner)
+                db.session.commit()
+                if generated_password:
+                    print(f"E-mail do dono do sistema: {owner_email}")
+                    print(f"Senha temporária do dono do sistema: {owner_password}")
 
     return app
