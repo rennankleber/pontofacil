@@ -50,7 +50,10 @@ Python 3.10 ou superior.
 
 - `iniciar_projeto.bat` inicia o servidor neste computador e abre o navegador.
 - `iniciar_rede_local.bat` inicia o servidor para dispositivos na mesma rede Wi-Fi/LAN; use o endereço IPv4 mostrado no CMD e a porta `5000`. Se o Firewall do Windows perguntar, permita somente em redes privadas. Não exponha esse servidor de desenvolvimento à internet.
-- `criar_acessos.bat` abre um assistente local para criar ou redefinir o acesso do dono e criar um administrador e um funcionário. As senhas são digitadas sem aparecer na tela e nunca são salvas nos arquivos `.bat`; o sistema grava somente hashes no banco SQLite local.
+- `criar_acesso_dono.bat` cria o acesso inicial do dono ou permite redefinir a senha de um dono existente.
+- `criar_acesso_administrador.bat` cria somente o acesso de um administrador; pede os dados da empresa e reutiliza a empresa se o CNPJ já estiver cadastrado.
+- `criar_acesso_funcionario.bat` cria somente o acesso de um funcionário; pede os dados da empresa e reutiliza a empresa se o CNPJ já estiver cadastrado.
+- As senhas dos três assistentes são digitadas sem aparecer na tela, não são salvas nos arquivos `.bat` e são armazenadas somente como hashes no banco SQLite local.
 - Os arquivos `.bat` procuram `py -3` ou `python`, criam um ambiente virtual e pedem confirmação antes de instalar as dependências na primeira execução. Se Python não estiver instalado, instale a versão 3.10 ou superior e habilite `Add python.exe to PATH`.
 
 O assistente usa o banco definido por `DATABASE_URL` (SQLite por padrão). Ele não apaga contas existentes, não redefine a senha do dono sem confirmação e recusa e-mails, CPFs ou matrículas duplicados.

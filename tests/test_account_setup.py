@@ -2,7 +2,13 @@ import unittest
 
 from app import create_app, db
 from app.models import Company, Employee, User
-from criar_acessos import SetupError, create_accesses
+from criar_acessos import (
+    SetupError,
+    create_accesses,
+    create_admin_access,
+    create_employee_access,
+    create_owner_access,
+)
 
 
 class AccountSetupTests(unittest.TestCase):
@@ -82,6 +88,61 @@ class AccountSetupTests(unittest.TestCase):
             self.assertNotEqual(admin.password_hash, admin_data["password"])
             self.assertEqual(employee_record.company_id, admin.company_id)
             self.assertEqual(result["company_name"], company_data["name"])
+
+    def test_creates_owner_access_without_creating_other_profiles(self):
+        owner_data, _, _, _ = self.access_data()
+
+        result = create_owner_access(self.app, owner_data)
+
+        with self.app.app_context():
+            owner = User.query.filter_by(email=owner_data["email"]).one()
+            self.assertEqual(User.query.count(), 1)
+            self.assertEqual(Company.query.count(), 0)
+            self.assertEqual(owner.role, "owner")
+            self.assertTrue(owner.check_password(owner_data["password"]))
+            self.assertEqual(result["owner_email"], owner_data["email"])
+
+    def test_creates_admin_access_without_creating_other_profiles(self):
+        _, company_data, admin_data, _ = self.access_data()
+
+        result = create_admin_access(self.app, company_data, admin_data)
+
+        with self.app.app_context():
+            admin = User.query.filter_by(email=admin_data["email"]).one()
+            self.assertEqual(User.query.count(), 1)
+            self.assertEqual(Employee.query.count(), 0)
+            self.assertEqual(Company.query.count(), 1)
+            self.assertEqual(admin.role, "admin")
+            self.assertTrue(admin.check_password(admin_data["password"]))
+            self.assertEqual(result["company_name"], company_data["name"])
+
+    def test_creates_employee_access_without_creating_other_profiles(self):
+        _, company_data, _, employee_data = self.access_data()
+
+        result = create_employee_access(self.app, company_data, employee_data)
+
+        with self.app.app_context():
+            employee = User.query.filter_by(email=employee_data["email"]).one()
+            employee_record = Employee.query.filter_by(user_id=employee.id).one()
+            self.assertEqual(User.query.count(), 1)
+            self.assertEqual(Employee.query.count(), 1)
+            self.assertEqual(Company.query.count(), 1)
+            self.assertEqual(employee.role, "employee")
+            self.assertTrue(employee.check_password(employee_data["password"]))
+            self.assertEqual(result["company_name"], company_data["name"])
+            self.assertEqual(employee_record.company_id, employee.company_id)
+
+    def test_separate_admin_and_employee_accesses_reuse_the_company(self):
+        _, company_data, admin_data, employee_data = self.access_data()
+
+        create_admin_access(self.app, company_data, admin_data)
+        create_employee_access(self.app, company_data, employee_data)
+
+        with self.app.app_context():
+            admin = User.query.filter_by(email=admin_data["email"]).one()
+            employee = User.query.filter_by(email=employee_data["email"]).one()
+            self.assertEqual(Company.query.count(), 1)
+            self.assertEqual(admin.company_id, employee.company_id)
 
     def test_rejects_duplicate_profiles_without_creating_accounts(self):
         owner_data, company_data, admin_data, employee_data = self.access_data()

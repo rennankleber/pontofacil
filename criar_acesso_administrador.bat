@@ -7,7 +7,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-"%PONTOFACIL_PYTHON%" "%~dp0criar_acessos.py"
+"%PONTOFACIL_PYTHON%" "%~dp0criar_acessos.py" administrador
 if errorlevel 1 (
     echo.
     echo O assistente terminou com erro. Leia a mensagem acima.

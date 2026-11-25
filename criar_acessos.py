@@ -1,3 +1,4 @@
+import argparse
 import re
 import sys
 from datetime import date
@@ -76,6 +77,133 @@ def _profile(data, label):
         "position": position,
         "password": password,
     }
+
+
+def _company_from_data(company_data):
+    company_name = _required(company_data, "name", "nome da empresa", 160)
+    phone = _required(company_data, "phone", "telefone da empresa", 30)
+    cnpj = normalize_cnpj(str(company_data.get("cnpj", "")))
+    if not valid_cnpj_format(cnpj):
+        raise SetupError("Informe um CNPJ com 14 letras ou números e dois dígitos.")
+
+    companies = Company.query.filter_by(cnpj=cnpj).all()
+    if len(companies) > 1:
+        raise SetupError("Há mais de uma empresa com esse CNPJ; corrija o cadastro primeiro.")
+    company = companies[0] if companies else None
+    if company is not None and not company.active:
+        raise SetupError("A empresa encontrada pelo CNPJ está inativa.")
+    if company is None:
+        company = Company(name=company_name, phone=phone, cnpj=cnpj)
+        db.session.add(company)
+    return company
+
+
+def _check_profile_available(profile):
+    if User.query.filter_by(email=profile["email"]).first():
+        raise SetupError(f"O e-mail {profile['email']} já está cadastrado.")
+    cpf_conflict, registration_conflict = profile_identity_conflicts(
+        profile["cpf"],
+        profile["registration"],
+    )
+    if cpf_conflict:
+        raise SetupError(f"O CPF de {profile['name']} já está cadastrado.")
+    if registration_conflict:
+        raise SetupError(f"A matrícula de {profile['name']} já está cadastrada.")
+
+
+def _commit_access_changes():
+    try:
+        db.session.commit()
+    except IntegrityError as error:
+        db.session.rollback()
+        raise SetupError(
+            "O banco recusou dados duplicados; nenhuma conta nova foi salva."
+        ) from error
+
+
+def create_owner_access(app, owner_data):
+    with app.app_context():
+        owner_email = _email(str(owner_data.get("email", "")), "dono")
+        owner = User.query.filter_by(email=owner_email).first()
+        existing_owners = User.query.filter_by(role="owner").all()
+        if owner is not None and owner.role != "owner":
+            raise SetupError("O e-mail informado para o dono já pertence a outro perfil.")
+        if existing_owners and owner is None:
+            raise SetupError(
+                "Já existe um dono cadastrado. Use o e-mail de uma conta de dono existente."
+            )
+
+        owner_password = _password(
+            owner_data,
+            "password",
+            "dono",
+            required=owner is None or owner_data.get("reset_existing", False),
+        )
+        if owner is None:
+            owner = User(
+                name=_required(owner_data, "name", "nome do dono", 120),
+                email=owner_email,
+                role="owner",
+                active=True,
+            )
+            owner.set_password(owner_password)
+            db.session.add(owner)
+        elif owner_password is not None:
+            owner.set_password(owner_password)
+
+        _commit_access_changes()
+        return {"owner_email": owner.email}
+
+
+def create_admin_access(app, company_data, admin_data):
+    with app.app_context():
+        admin = _profile(admin_data, "administrador")
+        _check_profile_available(admin)
+        company = _company_from_data(company_data)
+
+        admin_user = User(
+            name=admin["name"],
+            email=admin["email"],
+            cpf=admin["cpf"],
+            birth_date=admin["birth_date"],
+            registration=admin["registration"],
+            department=admin["department"],
+            position=admin["position"],
+            role="admin",
+            company=company,
+        )
+        admin_user.set_password(admin["password"])
+        db.session.add(admin_user)
+        _commit_access_changes()
+        return {"admin_email": admin_user.email, "company_name": company.name}
+
+
+def create_employee_access(app, company_data, employee_data):
+    with app.app_context():
+        employee = _profile(employee_data, "funcionário")
+        _check_profile_available(employee)
+        company = _company_from_data(company_data)
+
+        employee_user = User(
+            name=employee["name"],
+            email=employee["email"],
+            role="employee",
+            company=company,
+        )
+        employee_user.set_password(employee["password"])
+        employee_record = Employee(
+            name=employee["name"],
+            registration=employee["registration"],
+            cpf=employee["cpf"],
+            birth_date=employee["birth_date"],
+            company=company,
+            department=employee["department"],
+            position=employee["position"],
+            user=employee_user,
+        )
+        db.session.add_all([employee_user, employee_record])
+        _commit_access_changes()
+        return {"employee_email": employee_user.email, "company_name": company.name}
 
 
 def create_accesses(app, owner_data, company_data, admin_data, employee_data):
@@ -266,31 +394,52 @@ def _prompt_profile(label):
     }
 
 
-def main():
+def _prompt_company():
+    return {
+        "name": _read_text("Nome da empresa", 160),
+        "phone": _read_text("Telefone da empresa", 30),
+        "cnpj": _read_text("CNPJ da empresa", 20),
+    }
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Cria separadamente o acesso de um perfil do PontoFácil."
+    )
+    parser.add_argument(
+        "perfil",
+        choices=("dono", "administrador", "funcionario"),
+        help="perfil para o qual criar ou redefinir o acesso",
+    )
+    args = parser.parse_args(argv)
+
     if make_url(Config.SQLALCHEMY_DATABASE_URI).get_backend_name() != "sqlite":
         print("Este assistente cria acessos somente no banco SQLite local.")
         return 1
 
     try:
         app = create_app({"SEED_INITIAL_OWNER": False})
-        with app.app_context():
-            owners = User.query.filter_by(role="owner").order_by(User.id).all()
-        owner_data = _prompt_owner(owners)
-
-        company_data = {
-            "name": _read_text("Nome da empresa", 160),
-            "phone": _read_text("Telefone da empresa", 30),
-            "cnpj": _read_text("CNPJ da empresa", 20),
-        }
-        admin_data = _prompt_profile("administrador")
-        employee_data = _prompt_profile("funcionário")
-        result = create_accesses(
-            app,
-            owner_data,
-            company_data,
-            admin_data,
-            employee_data,
-        )
+        if args.perfil == "dono":
+            with app.app_context():
+                owners = User.query.filter_by(role="owner").order_by(User.id).all()
+            result = create_owner_access(app, _prompt_owner(owners))
+            print(f"\nAcesso de dono pronto: {result['owner_email']}")
+        elif args.perfil == "administrador":
+            result = create_admin_access(
+                app,
+                _prompt_company(),
+                _prompt_profile("administrador"),
+            )
+            print(f"\nAcesso de administrador criado: {result['admin_email']}")
+            print(f"Empresa: {result['company_name']}")
+        else:
+            result = create_employee_access(
+                app,
+                _prompt_company(),
+                _prompt_profile("funcionário"),
+            )
+            print(f"\nAcesso de funcionário criado: {result['employee_email']}")
+            print(f"Empresa: {result['company_name']}")
     except (KeyboardInterrupt, EOFError):
         print("\nAssistente cancelado; nenhuma conta foi criada.")
         return 130
@@ -303,11 +452,7 @@ def main():
         print(f"Erro ao acessar o banco local: {message}")
         return 1
 
-    print("\nAcessos prontos (as senhas não foram exibidas):")
-    print(f"Dono: {result['owner_email']}")
-    print(f"Administrador: {result['admin_email']}")
-    print(f"Funcionário: {result['employee_email']}")
-    print(f"Empresa: {result['company_name']}")
+    print("A senha não foi exibida e foi salva somente como hash.")
     return 0
 
 
