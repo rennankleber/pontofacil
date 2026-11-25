@@ -90,6 +90,8 @@ python -m unittest discover -s tests
 - `app/static/`: CSS, JavaScript e imagens.
 - `instance/`: banco SQLite local (não versionado).
 
+O arquivo `instance/pontofacil_esquema.db` é uma cópia segura de referência, com as tabelas vazias. O banco local com dados permanece ignorado pelo Git.
+
 ## Observações
 Este é o ponto de partida do projeto acadêmico. Foram adicionados testes básicos,
 fuso horário configurável e auditoria de correções. Antes de qualquer uso real
