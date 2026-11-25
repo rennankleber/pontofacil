@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Painel | PontoFácil{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+ <div><div class="text-uppercase small fw-semibold text-primary mb-2">Visão geral</div><h1 class="h3 mb-1">Olá, {{ current_user.name }}!</h1><p class="text-muted mb-0">Resumo do seu controle de ponto.</p></div>
+</div>
+<div class="row g-3">
+{% if current_user.role == 'admin' %}
+<div class="col-md-4"><div class="card metric"><div class="card-body"><div class="text-muted">Funcionários cadastrados</div><div class="display-6">{{ users_count }}</div></div></div></div>
+<div class="col-md-4"><div class="card metric"><div class="card-body"><div class="text-muted">Funcionários ativos</div><div class="display-6">{{ employees_count }}</div></div></div></div>
+{% endif %}
+{% if current_user.role != 'admin' %}
+<div class="col-md-4"><div class="card metric"><div class="card-body"><div class="text-muted">Marcações de hoje</div><div class="display-6">{{ punches_today }}</div></div></div></div>
+{% endif %}
+</div>
+<div class="mt-4">
+ <h2 class="h5 mb-3">Ações rápidas</h2>
+ <div class="row g-3">
+ {% if current_user.role == 'admin' %}
+ <div class="col-md-4">
+  <a class="quick-action card text-decoration-none" href="{{ url_for('employees.index') }}">
+   <div class="card-body"><h3 class="h6 mb-1">Funcionários</h3><p class="text-muted mb-0">Visualize e gerencie os colaboradores.</p></div>
+  </a>
+ </div>
+ <div class="col-md-4">
+  <a class="quick-action card text-decoration-none" href="{{ url_for('employees.create') }}">
+   <div class="card-body"><h3 class="h6 mb-1">Novo funcionário</h3><p class="text-muted mb-0">Cadastre um colaborador e seu acesso.</p></div>
+  </a>
+ </div>
+ <div class="col-md-4">
+  <a class="quick-action card text-decoration-none" href="{{ url_for('punches.report') }}">
+   <div class="card-body"><h3 class="h6 mb-1">Relatório de ponto</h3><p class="text-muted mb-0">Consulte as marcações e horas trabalhadas.</p></div>
+  </a>
+ </div>
+ {% else %}
+ <form class="col-md-4" method="post" action="{{ url_for('punches.index') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="quick-action card w-100" type="submit" name="quick_action" value="true">
+   <span class="card-body d-block"><span class="h6 d-block mb-1">Registrar ponto</span><span class="text-muted d-block mb-0">Registrar sua próxima marcação agora.</span></span>
+  </button>
+ </form>
+ <div class="col-md-4">
+  <a class="quick-action card text-decoration-none" href="{{ url_for('punches.index') }}">
+   <div class="card-body"><h3 class="h6 mb-1">Meu ponto</h3><p class="text-muted mb-0">Veja suas últimas marcações.</p></div>
+  </a>
+ </div>
+ <div class="col-md-4">
+  <a class="quick-action card text-decoration-none" href="{{ url_for('punches.report') }}">
+   <div class="card-body"><h3 class="h6 mb-1">Meu relatório</h3><p class="text-muted mb-0">Consulte suas horas e período trabalhado.</p></div>
+  </a>
+ </div>
+ {% endif %}
+ </div>
+</div>
+{% if current_user.role == 'admin' %}
+<section class="mt-4">
+ <h2 class="h5 mb-3">Marcações de hoje</h2>
+ <div class="mb-3">
+  <label class="form-label" for="employee-search">Buscar funcionário</label>
+  <input class="form-control" type="search" id="employee-search" placeholder="Digite o nome do funcionário" autocomplete="off">
+ </div>
+ <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+  <thead><tr><th>Funcionário</th><th>Entrada</th><th>Início do intervalo</th><th>Fim do intervalo</th><th>Saída</th><th>Status</th></tr></thead>
+  <tbody id="employee-rows">
+  {% for item in daily_employee_punches %}
+  <tr data-employee-name="{{ item.employee.name }}">
+   <td>{{ item.employee.name }}</td>
+   <td>{{ item.punches.get('entrada', '—') }}</td>
+   <td>{{ item.punches.get('inicio_intervalo', '—') }}</td>
+   <td>{{ item.punches.get('fim_intervalo', '—') }}</td>
+   <td>{{ item.punches.get('saida', '—') }}</td>
+   <td>{{ 'Ativo' if item.employee.active else 'Inativo' }}</td>
+  </tr>
+  {% else %}
+  <tr id="no-employees"><td colspan="6" class="text-center text-muted py-4">Nenhum funcionário cadastrado.</td></tr>
+  {% endfor %}
+  <tr id="no-search-results" hidden><td colspan="6" class="text-center text-muted py-4">Nenhum funcionário encontrado.</td></tr>
+  </tbody>
+ </table></div></div>
+</section>
+<script>
+ const employeeSearch = document.getElementById("employee-search");
+ const employeeRows = document.querySelectorAll("#employee-rows tr[data-employee-name]");
+ const noEmployees = document.getElementById("no-employees");
+ const noSearchResults = document.getElementById("no-search-results");
+ const normalizeName = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+
+ employeeSearch.addEventListener("input", () => {
+  const query = normalizeName(employeeSearch.value.trim());
+  let visibleRows = 0;
+  employeeRows.forEach((row) => {
+   const matches = normalizeName(row.dataset.employeeName).includes(query);
+   row.hidden = !matches;
+   if (matches) visibleRows += 1;
+  });
+  if (noEmployees) noEmployees.hidden = query.length > 0;
+  noSearchResults.hidden = query.length === 0 || visibleRows > 0;
+ });
+</script>
+{% endif %}
+{% endblock %}

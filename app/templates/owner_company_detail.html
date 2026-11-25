@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} | PontoFácil{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <a class="support-back-link" href="{{ url_for('owner.companies') }}">‹ Empresas</a>
+    <div class="text-uppercase small fw-semibold text-primary mt-3 mb-2">Empresa</div>
+    <h1 class="h3 mb-1">{{ company.name }}</h1>
+    <p class="text-muted mb-0">{{ company.phone or 'Sem telefone' }} · CNPJ {{ company.cnpj or 'não informado' }}</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="badge {{ 'text-bg-success' if company.active else 'text-bg-secondary' }}">{{ 'Ativa' if company.active else 'Inativa' }}</span>
+    <a class="btn btn-outline-primary" href="{{ url_for('owner.edit_company', company_id=company.id) }}">Editar empresa</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3"><div class="card metric"><div class="card-body"><div class="text-muted">Administradores</div><div class="display-6">{{ admins|length }}</div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card metric"><div class="card-body"><div class="text-muted">Funcionários</div><div class="display-6">{{ employees|length }}</div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card metric"><div class="card-body"><div class="text-muted">Funcionários ativos</div><div class="display-6">{{ active_employee_count }}</div></div></div></div>
+</div>
+
+<section class="card mb-4">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <strong>Administradores da empresa</strong>
+    {% if company.active %}
+    <a class="btn btn-sm btn-primary" href="{{ url_for('owner.create_administrator', company_id=company.id) }}">Novo administrador</a>
+    {% else %}
+    <span class="text-muted small">Ative a empresa para adicionar administradores.</span>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Nome</th><th>E-mail de acesso</th><th>Matrícula</th><th>Departamento</th><th>Cargo</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for admin in admins %}
+      <tr>
+        <td>{{ admin.name }}</td>
+        <td>{{ admin.email }}</td>
+        <td>{{ admin.registration or '—' }}</td>
+        <td>{{ admin.department or '—' }}</td>
+        <td>{{ admin.position or '—' }}</td>
+        <td>{{ 'Ativo' if admin.active else 'Inativo' }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('owner.edit_administrator', user_id=admin.id) }}">Editar</a>
+          <form class="d-inline" method="post" action="{{ url_for('owner.toggle_administrator', user_id=admin.id) }}" onsubmit="return confirm('{{ 'Desativar' if admin.active else 'Ativar' }} este administrador?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm {{ 'btn-outline-danger' if admin.active else 'btn-outline-success' }}">{{ 'Desativar' if admin.active else 'Ativar' }}</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center text-muted py-4">Nenhum administrador cadastrado.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <strong>Funcionários da empresa</strong>
+    {% if scope_admin %}
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('punches.report', admin_id=scope_admin.id) }}">Relatório de ponto</a>
+      <a class="btn btn-sm btn-primary" href="{{ url_for('employees.create', admin_id=scope_admin.id) }}">Novo funcionário</a>
+    </div>
+    {% else %}
+    <span class="text-muted small">Cadastre um administrador para gerenciar funcionários.</span>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Nome</th><th>Matrícula</th><th>Departamento</th><th>Cargo</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for employee in employees %}
+      <tr>
+        <td>{{ employee.name }}</td>
+        <td>{{ employee.registration }}</td>
+        <td>{{ employee.department or '—' }}</td>
+        <td>{{ employee.position or '—' }}</td>
+        <td>{{ 'Ativo' if employee.active else 'Inativo' }}</td>
+        <td class="text-end text-nowrap">
+          {% if scope_admin %}
+          <a class="btn btn-sm btn-outline-info" href="{{ url_for('punches.report', employee_id=employee.id, admin_id=scope_admin.id) }}">Ver ponto</a>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('employees.edit', employee_id=employee.id, admin_id=scope_admin.id) }}">Editar</a>
+          {% if employee.active %}
+          <form class="d-inline" method="post" action="{{ url_for('employees.delete', employee_id=employee.id, admin_id=scope_admin.id) }}" onsubmit="return confirm('Desativar este funcionário? O histórico será preservado.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger">Desativar</button>
+          </form>
+          {% else %}
+          <form class="d-inline" method="post" action="{{ url_for('employees.activate', employee_id=employee.id, admin_id=scope_admin.id) }}" onsubmit="return confirm('Ativar este funcionário novamente?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-success">Ativar</button>
+          </form>
+          {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-muted py-4">Nenhum funcionário cadastrado.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Corrigir marcação | PontoFácil{% endblock %}
+{% block content %}
+{% if current_user.role == 'owner' %}
+<div class="alert alert-info">Contexto: {{ selected_admin.name }} — {{ selected_admin.company.name }}. <a href="{{ url_for('owner.company_detail', company_id=selected_admin.company_id) }}">Voltar à empresa</a></div>
+{% endif %}
+<h1 class="h3 mb-3">Corrigir marcação</h1>
+<p class="text-muted">{{ punch.user.name }} — registro atual: {{ labels[punch.punch_type] }} em {{ punch.occurred_at.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+<div class="card mb-4"><div class="card-body">
+  <form method="post" class="row g-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if owner_admin_id %}<input type="hidden" name="admin_id" value="{{ owner_admin_id }}">{% endif %}
+    <div class="col-md-4">
+      <label class="form-label" for="punch_type">Tipo de marcação</label>
+      <select class="form-select" id="punch_type" name="punch_type" required>
+        {% for punch_type, label in labels.items() %}
+        <option value="{{ punch_type }}" {{ 'selected' if punch_type == punch.punch_type else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="occurred_at">Data e hora</label>
+      <input class="form-control" id="occurred_at" name="occurred_at" type="datetime-local" value="{{ punch.occurred_at.strftime('%Y-%m-%dT%H:%M') }}" required>
+    </div>
+    <div class="col-md-12">
+      <label class="form-label" for="reason">Justificativa</label>
+      <textarea class="form-control" id="reason" name="reason" maxlength="250" required></textarea>
+    </div>
+    <div class="col-12">
+      <button class="btn btn-primary" type="submit">Salvar correção</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('punches.report', admin_id=owner_admin_id) }}">Cancelar</a>
+    </div>
+  </form>
+</div></div>
+<h2 class="h5 mb-3">Histórico de alterações</h2>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+  <thead><tr><th>Quando</th><th>Responsável</th><th>Antes</th><th>Depois</th><th>Justificativa</th></tr></thead>
+  <tbody>
+  {% for correction in corrections %}
+  <tr>
+    <td>{{ correction.changed_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+    <td>{{ correction.changed_by.name }}</td>
+    <td>{{ labels[correction.original_type] }} — {{ correction.original_occurred_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+    <td>{{ labels[correction.new_type] }} — {{ correction.new_occurred_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+    <td>{{ correction.reason }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="text-center text-muted py-3">Esta marcação ainda não foi corrigida.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

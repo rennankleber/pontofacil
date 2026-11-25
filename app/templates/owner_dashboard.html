@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Painel do dono | PontoFácil{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Painel do dono do sistema</h1>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card metric"><div class="card-body"><div class="text-muted">Empresas</div><div class="display-6">{{ company_count }}</div></div></div></div>
+  <div class="col-md-4"><div class="card metric"><div class="card-body"><div class="text-muted">Empresas ativas</div><div class="display-6">{{ active_company_count }}</div></div></div></div>
+  <div class="col-md-4"><div class="card metric"><div class="card-body"><div class="text-muted">Administradores</div><div class="display-6">{{ admin_count }}</div></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-md-8"><a class="quick-action card text-decoration-none" href="{{ url_for('owner.companies') }}"><div class="card-body"><h2 class="h5">Empresas</h2><p class="text-muted mb-0">Acesse cada empresa para gerenciar administradores, funcionários e pontos.</p></div></a></div>
+</div>
+{% endblock %}

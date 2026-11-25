@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Entrar | PontoFácil{% endblock %}
+{% block main_class %}login-main{% endblock %}
+{% block content %}
+<div class="login-card">
+  <div class="row g-0">
+    <section class="col-md-5 login-aside">
+      <div>
+        <div class="login-kicker">PontoFácil</div>
+        <h2>Seu dia de trabalho, organizado.</h2>
+        <p>Registre e acompanhe sua jornada com praticidade, segurança e clareza.</p>
+      </div>
+      <p class="login-footnote">Controle de ponto simples para sua equipe.</p>
+    </section>
+    <section class="col-md-7 login-form-panel">
+      <div class="w-100">
+<h1 class="mb-1">Boas-vindas</h1><p class="text-muted mb-4">Entre na sua conta para continuar.</p>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="form-label" for="email">E-mail</label><input class="form-control mb-3" id="email" type="email" name="email" autocomplete="username" required>
+  <label class="form-label" for="password">Senha</label><input class="form-control mb-4" id="password" type="password" name="password" autocomplete="current-password" required>
+  <button class="btn btn-primary w-100">Entrar</button>
+</form>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

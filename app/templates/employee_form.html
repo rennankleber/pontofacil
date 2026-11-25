@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+{% if current_user.role == 'owner' %}
+<div class="alert alert-info">Contexto: {{ selected_admin.name }} — {{ selected_admin.company.name }}.</div>
+{% endif %}
+<h1 class="h3 mb-3">{{ 'Editar funcionário' if employee else 'Novo funcionário' }}</h1>
+<div class="card"><div class="card-body"><form method="post" class="row g-3">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% if owner_admin_id %}<input type="hidden" name="admin_id" value="{{ owner_admin_id }}">{% endif %}
+<div class="col-md-6"><label class="form-label" for="name">Nome completo *</label><input class="form-control" id="name" name="name" required maxlength="120" value="{{ request.form.get('name', employee.name if employee else '') }}"></div>
+<div class="col-md-6"><label class="form-label" for="cpf">CPF *</label><input class="form-control" id="cpf" name="cpf" required maxlength="14" inputmode="numeric" placeholder="000.000.000-00" value="{{ request.form.get('cpf', (employee.cpf or '') if employee else '') }}"></div>
+<div class="col-md-6"><label class="form-label" for="birth_date">Data de nascimento *</label><input class="form-control" id="birth_date" type="date" name="birth_date" required value="{{ request.form.get('birth_date', employee.birth_date.isoformat() if employee and employee.birth_date else '') }}"></div>
+<div class="col-md-6"><label class="form-label" for="registration">Matrícula *</label><input class="form-control" id="registration" name="registration" required maxlength="30" value="{{ request.form.get('registration', employee.registration if employee else '') }}"></div>
+<div class="col-md-6"><label class="form-label" for="department">Departamento *</label><input class="form-control" id="department" name="department" required maxlength="80" value="{{ request.form.get('department', (employee.department or '') if employee else '') }}"></div>
+<div class="col-md-6"><label class="form-label" for="position">Cargo *</label><input class="form-control" id="position" name="position" required maxlength="80" value="{{ request.form.get('position', (employee.position or '') if employee else '') }}"></div>
+{% if employee and employee.user %}
+<div class="col-md-6"><label class="form-label" for="email">E-mail para login *</label><input class="form-control" id="email" type="email" name="email" required maxlength="160" value="{{ request.form.get('email', employee.user.email) }}"></div>
+{% elif not employee %}
+<hr><div class="col-md-6"><label class="form-label" for="email">E-mail para login *</label><input class="form-control" id="email" type="email" name="email" required maxlength="160" value="{{ request.form.get('email', '') }}"></div><div class="col-md-6"><label class="form-label" for="password">Senha inicial (mínimo 8 caracteres) *</label><input class="form-control" id="password" type="password" name="password" minlength="8" required></div>
+{% endif %}
+<div class="col-12"><button class="btn btn-primary">Salvar</button> <a class="btn btn-outline-secondary" href="{{ url_for('employees.index', admin_id=owner_admin_id) }}">Cancelar</a></div>
+</form></div></div>
+{% endblock %}

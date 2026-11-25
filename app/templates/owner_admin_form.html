@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar administrador' if admin else 'Novo administrador' }} | PontoFácil{% endblock %}
+{% block content %}
+{% if selected_company %}
+<div class="alert alert-info">Empresa: {{ selected_company.name }}</div>
+{% endif %}
+<h1 class="h3 mb-3">{{ 'Editar administrador' if admin else 'Novo administrador' }}</h1>
+<div class="card"><div class="card-body"><form method="post" class="row g-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="col-md-6"><label class="form-label" for="name">Nome completo *</label><input class="form-control" id="name" name="name" required maxlength="120" value="{{ request.form.get('name', admin.name if admin else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="cpf">CPF *</label><input class="form-control" id="cpf" name="cpf" required maxlength="14" inputmode="numeric" placeholder="000.000.000-00" value="{{ request.form.get('cpf', (admin.cpf or '') if admin else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="birth_date">Data de nascimento *</label><input class="form-control" id="birth_date" type="date" name="birth_date" required value="{{ request.form.get('birth_date', admin.birth_date.isoformat() if admin and admin.birth_date else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="email">E-mail de acesso *</label><input class="form-control" id="email" type="email" name="email" required maxlength="160" value="{{ request.form.get('email', admin.email if admin else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="registration">Matrícula *</label><input class="form-control" id="registration" name="registration" required maxlength="30" value="{{ request.form.get('registration', (admin.registration or '') if admin else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="department">Departamento *</label><input class="form-control" id="department" name="department" required maxlength="80" value="{{ request.form.get('department', (admin.department or '') if admin else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="position">Cargo *</label><input class="form-control" id="position" name="position" required maxlength="80" value="{{ request.form.get('position', (admin.position or '') if admin else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="password">{{ 'Nova senha (opcional, mínimo 8 caracteres)' if admin else 'Senha inicial (mínimo 8 caracteres) *' }}</label><input class="form-control" id="password" type="password" name="password" {{ '' if admin else 'required' }} minlength="8" autocomplete="new-password"></div>
+  <div class="col-12"><button class="btn btn-primary">Salvar</button> <a class="btn btn-outline-secondary" href="{{ url_for('owner.company_detail', company_id=selected_company.id) if selected_company else url_for('owner.companies') }}">Cancelar</a></div>
+</form></div></div>
+{% endblock %}

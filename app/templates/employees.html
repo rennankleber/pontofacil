@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+{% if current_user.role == 'owner' %}
+<div class="alert alert-info">Contexto: {{ selected_admin.name }} — {{ selected_admin.company.name }}. <a href="{{ url_for('owner.company_detail', company_id=selected_admin.company_id) }}">Voltar à empresa</a></div>
+{% endif %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+ <h1 class="h3">Funcionários{% if current_user.role == 'owner' %} — {{ selected_admin.name }}{% endif %}</h1>
+ <a class="btn btn-primary" href="{{ url_for('employees.create', admin_id=owner_admin_id) }}">Novo funcionário</a>
+</div>
+<div class="alert alert-info">A exclusão de um funcionário é lógica: ele fica inativo, perde o acesso ao sistema e seu histórico de ponto é preservado.</div>
+<div class="mb-3">
+ <label class="form-label" for="employee-search">Buscar funcionário</label>
+ <input class="form-control" type="search" id="employee-search" placeholder="Digite o nome do funcionário" autocomplete="off">
+</div>
+<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Nome</th><th>Matrícula</th><th>Departamento</th><th>Cargo</th><th>Status</th><th></th></tr></thead><tbody id="employee-rows">
+{% for e in employees %}
+<tr data-employee-name="{{ e.name }}">
+ <td>{{ e.name }}</td><td>{{ e.registration }}</td><td>{{ e.department or '-' }}</td><td>{{ e.position or '-' }}</td><td>{{ 'Ativo' if e.active else 'Inativo' }}</td>
+ <td class="text-end text-nowrap">
+  <a class="btn btn-sm btn-outline-info" href="{{ url_for('punches.report', employee_id=e.id, admin_id=owner_admin_id) }}">Ver ponto</a>
+  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('employees.edit', employee_id=e.id, admin_id=owner_admin_id) }}">Editar</a>
+  {% if e.active %}
+  <form class="d-inline" method="post" action="{{ url_for('employees.delete', employee_id=e.id, admin_id=owner_admin_id) }}" onsubmit="return confirm('Desativar este funcionário? O histórico será preservado.')">
+   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger">Desativar</button>
+  </form>
+  {% else %}
+  <form class="d-inline" method="post" action="{{ url_for('employees.activate', employee_id=e.id, admin_id=owner_admin_id) }}" onsubmit="return confirm('Ativar este funcionário novamente?')">
+   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-success">Ativar</button>
+  </form>
+  {% endif %}
+ </td>
+</tr>
+{% else %}<tr id="no-employees"><td colspan="6" class="text-center text-muted py-4">Nenhum funcionário cadastrado.</td></tr>{% endfor %}
+<tr id="no-search-results" hidden><td colspan="6" class="text-center text-muted py-4">Nenhum funcionário encontrado.</td></tr>
+</tbody></table></div></div>
+<script>
+ const employeeSearch = document.getElementById("employee-search");
+ const employeeRows = document.querySelectorAll("#employee-rows tr[data-employee-name]");
+ const noEmployees = document.getElementById("no-employees");
+ const noSearchResults = document.getElementById("no-search-results");
+ const normalizeName = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+
+ employeeSearch.addEventListener("input", () => {
+  const query = normalizeName(employeeSearch.value.trim());
+  let visibleRows = 0;
+  employeeRows.forEach((row) => {
+   const matches = normalizeName(row.dataset.employeeName).includes(query);
+   row.hidden = !matches;
+   if (matches) visibleRows += 1;
+  });
+  if (noEmployees) noEmployees.hidden = query.length > 0;
+  noSearchResults.hidden = query.length === 0 || visibleRows > 0;
+ });
+</script>
+{% endblock %}

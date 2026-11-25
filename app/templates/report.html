@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+{% if current_user.role == 'owner' %}
+<div class="alert alert-info">Contexto: {{ selected_admin.name }} — {{ selected_admin.company.name }}. <a href="{{ url_for('owner.company_detail', company_id=selected_admin.company_id) }}">Voltar à empresa</a></div>
+{% endif %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+  <h1 class="h3">Relatório de marcações{% if current_user.role == 'owner' %} — {{ selected_admin.name }}{% endif %}</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{{ url_for('punches.report_csv', inicio=start_text, fim=end_text, employee_id=selected_employee_id, admin_id=owner_admin_id) }}">Exportar CSV</a>
+    <a class="btn btn-outline-danger" href="{{ url_for('punches.report_pdf', inicio=start_text, fim=end_text, employee_id=selected_employee_id, admin_id=owner_admin_id) }}">Exportar PDF</a>
+  </div>
+</div>
+
+<form class="card mb-4" method="get">
+  <div class="card-body row g-3 align-items-end">
+    {% if owner_admin_id %}<input type="hidden" name="admin_id" value="{{ owner_admin_id }}">{% endif %}
+    <div class="col-md-3"><label class="form-label">Data inicial</label><input class="form-control" type="date" name="inicio" value="{{ start_text }}"></div>
+    <div class="col-md-3"><label class="form-label">Data final</label><input class="form-control" type="date" name="fim" value="{{ end_text }}"></div>
+    {% if employees %}
+    <div class="col-md-4"><label class="form-label">Funcionário</label><select class="form-select" name="employee_id"><option value="">Todos</option>{% for employee in employees %}<option value="{{ employee.id }}" {{ 'selected' if selected_employee_id == (employee.id|string) else '' }}>{{ employee.name }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <div class="col-md-2"><button class="btn btn-primary w-100">Filtrar</button></div>
+  </div>
+</form>
+
+<div class="card mb-4"><div class="card-header"><strong>Horas trabalhadas</strong></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Funcionário</th><th>Total no período</th></tr></thead><tbody>
+{% for employee in employee_summaries %}<tr><td>{{ employee.name }}</td><td><strong>{{ employee.hours }} horas</strong></td></tr>{% else %}<tr><td colspan="2" class="text-center text-muted py-3">Nenhum registro no período.</td></tr>{% endfor %}
+</tbody></table></div></div>
+
+<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Funcionário</th><th>Marcação</th><th>Data e hora</th>{% if current_user.role == 'admin' or owner_admin_id %}<th></th>{% endif %}</tr></thead><tbody>
+{% for p in records %}<tr><td>{{ p.user.name }}</td><td>{{ {'entrada':'Entrada','inicio_intervalo':'Início do intervalo','fim_intervalo':'Fim do intervalo','saida':'Saída'}[p.punch_type] }}</td><td>{{ p.occurred_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>{% if current_user.role == 'admin' or owner_admin_id %}<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('punches.correct', punch_id=p.id, admin_id=owner_admin_id) }}">Corrigir</a></td>{% endif %}</tr>{% else %}<tr><td colspan="{{ 4 if current_user.role == 'admin' or owner_admin_id else 3 }}" class="text-center text-muted py-4">Nenhum registro encontrado.</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

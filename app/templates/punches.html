@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h3">Meu ponto</h1><p class="text-muted">As marcações são registradas com a data e hora do servidor.</p>
+<div class="card mb-4"><div class="card-body">
+{% if expected %}
+<h2 class="h5">Próxima marcação: {{ labels[expected] }}</h2>
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="punch_type" value="{{ expected }}"><button class="btn btn-success btn-lg">Bater ponto — {{ labels[expected] }}</button></form>
+{% else %}<div class="alert alert-success mb-0">As quatro marcações previstas para hoje já foram concluídas.</div>{% endif %}
+</div></div>
+<h2 class="h5">Últimas marcações</h2><div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Tipo</th><th>Data e hora</th></tr></thead><tbody>
+{% for p in punches %}<tr><td>{{ labels[p.punch_type] }}</td><td>{{ p.occurred_at.strftime('%d/%m/%Y %H:%M:%S') }}</td></tr>{% else %}<tr><td colspan="2" class="text-center text-muted py-3">Nenhuma marcação registrada.</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

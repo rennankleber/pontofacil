@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Editar empresa | PontoFácil{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Editar empresa</h1>
+<div class="card"><div class="card-body"><form method="post" class="row g-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="col-md-6"><label class="form-label" for="name">Nome da empresa *</label><input class="form-control" id="name" name="name" required maxlength="160" value="{{ request.form.get('name', company.name) }}"></div>
+  <div class="col-md-6"><label class="form-label" for="phone">Telefone *</label><input class="form-control" id="phone" type="tel" name="phone" required maxlength="30" value="{{ request.form.get('phone', company.phone or '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="cnpj">CNPJ *</label><input class="form-control" id="cnpj" name="cnpj" required maxlength="18" placeholder="00.000.000/0000-00" value="{{ request.form.get('cnpj', company.cnpj or '') }}"><div class="form-text">Informe 14 caracteres, com dois dígitos verificadores no final.</div></div>
+  {% if initial_admin %}
+  <div class="col-12"><hr><h2 class="h5 mb-0">Administrador inicial</h2><p class="text-muted mb-0">O e-mail é usado para entrar no sistema. Deixe a senha vazia para mantê-la.</p></div>
+  <div class="col-md-6"><label class="form-label" for="admin_name">Nome completo *</label><input class="form-control" id="admin_name" name="admin_name" required maxlength="120" value="{{ request.form.get('admin_name', initial_admin.name) }}"></div>
+  <div class="col-md-6"><label class="form-label" for="admin_cpf">CPF *</label><input class="form-control" id="admin_cpf" name="admin_cpf" required maxlength="14" inputmode="numeric" placeholder="000.000.000-00" value="{{ request.form.get('admin_cpf', initial_admin.cpf or '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="admin_birth_date">Data de nascimento *</label><input class="form-control" id="admin_birth_date" type="date" name="admin_birth_date" required value="{{ request.form.get('admin_birth_date', initial_admin.birth_date.isoformat() if initial_admin.birth_date else '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="admin_email">E-mail de acesso *</label><input class="form-control" id="admin_email" type="email" name="admin_email" required maxlength="160" value="{{ request.form.get('admin_email', initial_admin.email) }}"></div>
+  <div class="col-md-6"><label class="form-label" for="admin_registration">Matrícula *</label><input class="form-control" id="admin_registration" name="admin_registration" required maxlength="30" value="{{ request.form.get('admin_registration', initial_admin.registration or '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="admin_department">Departamento *</label><input class="form-control" id="admin_department" name="admin_department" required maxlength="80" value="{{ request.form.get('admin_department', initial_admin.department or '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="admin_position">Cargo *</label><input class="form-control" id="admin_position" name="admin_position" required maxlength="80" value="{{ request.form.get('admin_position', initial_admin.position or '') }}"></div>
+  <div class="col-md-6"><label class="form-label" for="admin_password">Nova senha (opcional)</label><input class="form-control" id="admin_password" type="password" name="admin_password" minlength="8" autocomplete="new-password"><div class="form-text">Mínimo de 8 caracteres. A senha atual não é exibida.</div></div>
+  {% else %}
+  <div class="col-12"><div class="alert alert-warning mb-0">Esta empresa não tem administrador inicial vinculado. Cadastre um administrador pela seção Administradores.</div></div>
+  {% endif %}
+  <div class="col-12"><button class="btn btn-primary">Salvar</button> <a class="btn btn-outline-secondary" href="{{ url_for('owner.company_detail', company_id=company.id) }}">Cancelar</a></div>
+</form></div></div>
+{% endblock %}

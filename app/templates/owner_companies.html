@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Empresas | PontoFácil{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">Empresas</h1><a class="btn btn-primary" href="{{ url_for('owner.create_company') }}">Nova empresa</a></div>
+<div class="mb-3">
+  <label class="form-label" for="company-search">Pesquisar empresa</label>
+  <input class="form-control" type="search" id="company-search" placeholder="Digite o nome, telefone ou CNPJ" autocomplete="off">
+</div>
+<div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+  <thead><tr><th>Empresa</th><th>Telefone</th><th>CNPJ</th><th>Administradores</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for company, admin_count in companies %}
+  <tr data-company-search="{{ company.name }} {{ company.phone or '' }} {{ company.cnpj or '' }}">
+    <td>{{ company.name }}</td>
+    <td>{{ company.phone or '—' }}</td>
+    <td>{{ company.cnpj or '—' }}</td>
+    <td>{{ admin_count }}</td>
+    <td>{{ 'Ativa' if company.active else 'Inativa' }}</td>
+    <td class="text-end text-nowrap">
+      <a class="btn btn-sm btn-primary" href="{{ url_for('owner.company_detail', company_id=company.id) }}">Acessar</a>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('owner.edit_company', company_id=company.id) }}">Editar</a>
+      <form class="d-inline" method="post" action="{{ url_for('owner.toggle_company', company_id=company.id) }}" onsubmit="return confirm('{{ 'Desativar' if company.active else 'Ativar' }} esta empresa?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm {{ 'btn-outline-danger' if company.active else 'btn-outline-success' }}">{{ 'Desativar' if company.active else 'Ativar' }}</button>
+      </form>
+      <form class="d-inline" method="post" action="{{ url_for('owner.delete_company', company_id=company.id) }}" onsubmit="return confirm('Excluir permanentemente esta empresa e todos os administradores, funcionários, marcações e histórico vinculados? Esta ação não pode ser desfeita.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-danger">Excluir</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="6" class="text-center text-muted py-4">Nenhuma empresa cadastrada.</td></tr>{% endfor %}
+  <tr id="no-company-search-results" hidden><td colspan="6" class="text-center text-muted py-4">Nenhuma empresa encontrada.</td></tr>
+  </tbody>
+</table></div></div>
+<script>
+  const companySearch = document.getElementById("company-search");
+  const companyRows = document.querySelectorAll("tr[data-company-search]");
+  const noCompanySearchResults = document.getElementById("no-company-search-results");
+  const normalizeCompanySearch = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+
+  companySearch.addEventListener("input", () => {
+    const query = normalizeCompanySearch(companySearch.value.trim());
+    let visibleRows = 0;
+    companyRows.forEach((row) => {
+      const matches = normalizeCompanySearch(row.dataset.companySearch).includes(query);
+      row.hidden = !matches;
+      if (matches) visibleRows += 1;
+    });
+    noCompanySearchResults.hidden = query.length === 0 || visibleRows > 0;
+  });
+</script>
+{% endblock %}
