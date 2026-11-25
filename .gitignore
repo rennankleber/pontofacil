@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+.venv-pontofacil/
 venv/
 .env
 instance/*.db
