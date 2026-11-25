@@ -99,9 +99,7 @@ python -m unittest discover -s tests
 - `app/routes/`: rotas da aplicação, incluindo o painel do dono e o isolamento por empresa.
 - `app/templates/`: páginas HTML.
 - `app/static/`: CSS, JavaScript e imagens.
-- `instance/`: banco SQLite local (não versionado).
-
-O arquivo `instance/pontofacil_esquema.db` é uma cópia segura de referência, com as tabelas vazias. O banco local com dados permanece ignorado pelo Git.
+- `instance/`: banco SQLite local (não versionado). O banco local com dados permanece ignorado pelo Git.
 
 ## Observações
 Este é o ponto de partida do projeto acadêmico. Foram adicionados testes básicos,
