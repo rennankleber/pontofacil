@@ -54,16 +54,19 @@ if not defined PYTHON_LAUNCHER (
     py -3 -c "import sys" >nul 2>nul
     if not errorlevel 1 (
         echo O projeto exige Python 3.10 ou superior.
+        echo Execute instalar_python.bat para instalar Python 3.14.10 x64.
         endlocal & exit /b 1
     )
     python -c "import sys" >nul 2>nul
     if not errorlevel 1 (
         echo O projeto exige Python 3.10 ou superior.
+        echo Execute instalar_python.bat para instalar Python 3.14.10 x64.
         endlocal & exit /b 1
     )
     echo Python nao foi encontrado neste computador.
-    echo Instale Python 3.10 ou superior em https://www.python.org/downloads/windows/
-    echo Durante a instalacao, habilite "Add python.exe to PATH".
+    echo O instalador Python 3.14.10 x64 esta nesta pasta.
+    echo Execute instalar_python.bat e depois abra novamente este arquivo.
+    echo Para outras arquiteturas, acesse https://www.python.org/downloads/windows/
     endlocal & exit /b 1
 )
 
@@ -78,6 +81,7 @@ goto check_venv
 
 :python_version_error
 echo O ambiente virtual existente exige Python 3.10 ou superior.
+echo Execute instalar_python.bat para instalar Python 3.14.10 x64.
 if "%VENV_DIR%"==".venv" goto use_alternate_venv
 endlocal & exit /b 1
 

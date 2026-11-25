@@ -48,6 +48,7 @@ Python 3.10 ou superior.
 
 ## Inicialização no Windows
 
+- O instalador oficial do Python 3.14.10 (64 bits) está em `python-3.14.10-amd64.exe`. Execute `instalar_python.bat` antes dos outros lançadores se Python ainda não estiver instalado; o instalador é configurado para adicionar Python ao PATH.
 - `iniciar_projeto.bat` inicia o servidor neste computador e abre o navegador.
 - `iniciar_rede_local.bat` inicia o servidor para dispositivos na mesma rede Wi-Fi/LAN; use o endereço IPv4 mostrado no CMD e a porta `5000`. Se o Firewall do Windows perguntar, permita somente em redes privadas. Não exponha esse servidor de desenvolvimento à internet.
 - `criar_acesso_dono.bat` cria o acesso inicial do dono ou permite redefinir a senha de um dono existente.
